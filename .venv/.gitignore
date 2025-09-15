@@ -1,0 +1,47 @@
+# -------------------------
+# Database files
+# -------------------------
+users.db
+*.sqlite3
+
+# -------------------------
+# Environment files
+# -------------------------
+.env
+
+# -------------------------
+# Virtual Environment folders
+# -------------------------
+venv/
+Scripts/
+share/
+
+# -------------------------
+# Ignore models (user-trained models)
+# -------------------------
+models/
+
+# -------------------------
+# Python cache
+# -------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# -------------------------
+# Jupyter Notebook checkpoints
+# -------------------------
+.ipynb_checkpoints/
+
+# -------------------------
+# IDE files
+# -------------------------
+.idea/
+.vscode/
+
+# -------------------------
+# OS generated files
+# -------------------------
+.DS_Store
+Thumbs.db
