@@ -13,7 +13,7 @@ from src.train_model import train_model, evaluate_model, get_model_parameters_ui
 import streamlit.components.v1 as components
 import os
 import plotly.io as pio
-pio.renderers.default = "iframe"   # force interactive only, no kaleido
+pio.renderers.default = "iframe"   # force interactive only
 
 # --- Disable back button navigation ---
 components.html("""
@@ -167,7 +167,13 @@ if df is not None and not df.empty:
 
         # --- VISUAL REPORT ---
         if st.button("📊 Generate Smart Visual Report"):
-            generate_visual_report(df_cleaned)  # <- sirf charts dikhayega, export hata diya hai
+            figs = generate_visual_report(df_cleaned)  # return list of figures
+            st.session_state.visual_report_figs = figs
+
+        if st.session_state.visual_report_figs:
+            st.subheader("Previously Generated Visual Report")
+            for fig in st.session_state.visual_report_figs:
+                st.plotly_chart(fig, use_container_width=True)
 
         # --- ML Task Selection ---
         target_column, task_type = get_target_column(df_cleaned)
