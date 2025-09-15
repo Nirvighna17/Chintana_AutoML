@@ -167,13 +167,7 @@ if df is not None and not df.empty:
 
         # --- VISUAL REPORT ---
         if st.button("📊 Generate Smart Visual Report"):
-            figs = generate_visual_report(df_cleaned)  # return list of figures
-            st.session_state.visual_report_figs = figs
-
-        if st.session_state.visual_report_figs:
-            st.subheader("Previously Generated Visual Report")
-            for fig in st.session_state.visual_report_figs:
-                st.plotly_chart(fig, use_container_width=True)
+            generate_visual_report(df_cleaned)
 
         # --- ML Task Selection ---
         target_column, task_type = get_target_column(df_cleaned)
