@@ -23,10 +23,15 @@ def generate_visual_report(df_cleaned):
 
     image_paths = []
 
+    # ---- FIXED save_fig function ----
     def save_fig(fig, title):
         path = os.path.join(tempfile.gettempdir(), f"{uuid.uuid4().hex}.png")
-        fig.write_image(path, format="png")
-        image_paths.append((title, path))
+        try:
+            # Force kaleido engine (no Chrome required)
+            fig.write_image(path, format="png", engine="kaleido")
+            image_paths.append((title, path))
+        except Exception as e:
+            st.warning(f"⚠️ Could not export {title}: {e}. Chart will only be visible interactively.")
 
     if view_mode == "Interactive (Plotly)":
         if len(numeric_cols) >= 2:
@@ -123,7 +128,10 @@ def generate_visual_report(df_cleaned):
 
         for title, img_path in image_paths:
             pdf.cell(0, 10, title, ln=True)
-            pdf.image(img_path, w=180)
+            try:
+                pdf.image(img_path, w=180)
+            except Exception as e:
+                st.warning(f"⚠️ Could not add {title} to PDF: {e}")
             pdf.ln(5)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -139,4 +147,7 @@ def generate_visual_report(df_cleaned):
             os.unlink(tmp.name)
 
         for _, path in image_paths:
-            os.remove(path)
+            try:
+                os.remove(path)
+            except:
+                pass
