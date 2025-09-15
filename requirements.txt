@@ -12,3 +12,4 @@ sqlalchemy
 bcrypt
 email-validator
 kaleido
+pyppeteer
