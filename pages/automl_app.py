@@ -12,6 +12,8 @@ from src.data_splitter import auto_split, manual_split, generate_kfold_splits, d
 from src.train_model import train_model, evaluate_model, get_model_parameters_ui, save_model
 import streamlit.components.v1 as components
 import os
+import plotly.io as pio
+pio.renderers.default = "iframe"   # force interactive only, no kaleido
 
 # --- Disable back button navigation ---
 components.html("""
