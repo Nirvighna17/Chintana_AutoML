@@ -13,9 +13,15 @@ from src.train_model import train_model, evaluate_model, get_model_parameters_ui
 import streamlit.components.v1 as components
 import os
 import plotly.io as pio
-pio.kaleido.scope.default_format = "png"
-pio.kaleido.scope.default_width = 800
-pio.kaleido.scope.default_height = 600
+
+# Safe check: force kaleido engine if available
+try:
+    pio.kaleido.scope.default_format = "png"
+    pio.kaleido.scope.default_width = 800
+    pio.kaleido.scope.default_height = 600
+except Exception:
+    pass  # On server (deploy) this won't break
+
 
 components.html("""
     <script>
