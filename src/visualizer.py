@@ -8,7 +8,6 @@ import os
 from fpdf import FPDF
 import tempfile
 import uuid
-import plotly.io as pio  # Required for saving plotly figures
 
 
 def generate_visual_report(df_cleaned):
@@ -19,7 +18,7 @@ def generate_visual_report(df_cleaned):
     bool_cols = df_cleaned.select_dtypes(include='bool').columns.tolist()
     datetime_cols = df_cleaned.select_dtypes(include=['datetime64']).columns.tolist()
 
-    view_mode = st.radio("🔀 Select View Mode:", ["Interactive (Plotly)", "Static (Seaborn/Matplotlib)"])
+    view_mode = st.radio("🔀 Select View Mode:", ["Interactive (Plotly)"], index=0)
 
     image_paths = []
 
@@ -27,11 +26,11 @@ def generate_visual_report(df_cleaned):
     def save_fig(fig, title):
         path = os.path.join(tempfile.gettempdir(), f"{uuid.uuid4().hex}.png")
         try:
-            # Force kaleido engine (no Chrome required)
             fig.write_image(path, format="png", engine="kaleido")
             image_paths.append((title, path))
-        except Exception as e:
-            st.warning(f"⚠️ Could not export {title}: {e}. Chart will only be visible interactively.")
+        except Exception:
+            # silently ignore export issues (no warnings in UI)
+            pass
 
     if view_mode == "Interactive (Plotly)":
         if len(numeric_cols) >= 2:
@@ -39,7 +38,7 @@ def generate_visual_report(df_cleaned):
             corr = df_cleaned[numeric_cols].corr().values
             labels = df_cleaned[numeric_cols].columns.tolist()
             fig = ff.create_annotated_heatmap(z=corr, x=labels, y=labels, colorscale='Viridis')
-            st.plotly_chart(fig, use_container_width=True, key=str(hash("corr_heatmap")))
+            st.plotly_chart(fig, use_container_width=True)
             save_fig(fig, "Correlation Heatmap")
 
         for col in numeric_cols:
@@ -48,24 +47,24 @@ def generate_visual_report(df_cleaned):
             if values.nunique() > 1:
                 try:
                     fig = ff.create_distplot([values], group_labels=[col], show_hist=True, show_rug=False)
-                    st.plotly_chart(fig, use_container_width=True, key=str(hash(f"dist_{col}")))
+                    st.plotly_chart(fig, use_container_width=True)
                     save_fig(fig, f"Histogram & KDE of {col}")
-                except Exception as e:
-                    st.warning(f"KDE failed for {col}: {e}")
+                except Exception:
+                    pass
             else:
                 st.info(f"Skipping KDE for {col} — not enough variation.")
 
             st.write(f"### 📦 Box & 🎻 Violin Plot of {col}")
             fig_box = px.box(df_cleaned, y=col, title=f"Box Plot of {col}")
             fig_violin = px.violin(df_cleaned, y=col, box=True, title=f"Violin Plot of {col}")
-            st.plotly_chart(fig_box, use_container_width=True, key=str(hash(f"box_{col}")))
-            st.plotly_chart(fig_violin, use_container_width=True, key=str(hash(f"violin_{col}")))
+            st.plotly_chart(fig_box, use_container_width=True)
+            st.plotly_chart(fig_violin, use_container_width=True)
             save_fig(fig_box, f"Box Plot of {col}")
             save_fig(fig_violin, f"Violin Plot of {col}")
 
             st.write(f"### 📈 Line Plot of {col}")
             fig_line = px.line(df_cleaned[col].dropna().reset_index(), y=col, title=f"Line Plot of {col}")
-            st.plotly_chart(fig_line, use_container_width=True, key=str(hash(f"line_{col}")))
+            st.plotly_chart(fig_line, use_container_width=True)
             save_fig(fig_line, f"Line Plot of {col}")
 
         for col in cat_cols:
@@ -73,25 +72,25 @@ def generate_visual_report(df_cleaned):
             bar_data = df_cleaned[col].value_counts().reset_index()
             bar_data.columns = [col, 'count']
             fig = px.bar(bar_data, x=col, y='count', title=f"Bar Chart of {col}")
-            st.plotly_chart(fig, use_container_width=True, key=str(hash(f"bar_{col}")))
+            st.plotly_chart(fig, use_container_width=True)
             save_fig(fig, f"Bar Chart of {col}")
 
             if df_cleaned[col].nunique() <= 10:
                 st.write(f"### 🥧 Pie Chart of {col}")
                 fig = px.pie(df_cleaned, names=col, title=f"Pie Chart of {col}")
-                st.plotly_chart(fig, use_container_width=True, key=str(hash(f"pie_{col}")))
+                st.plotly_chart(fig, use_container_width=True)
                 save_fig(fig, f"Pie Chart of {col}")
 
         for col in bool_cols:
             st.write(f"### ✅ Countplot of {col}")
             fig = px.bar(df_cleaned[col].value_counts().reset_index(), x='index', y=col, title=f"Count Plot of {col}")
-            st.plotly_chart(fig, use_container_width=True, key=str(hash(f"bool_{col}")))
+            st.plotly_chart(fig, use_container_width=True)
             save_fig(fig, f"Count Plot of {col}")
 
         if len(numeric_cols) > 1 and df_cleaned.shape[0] <= 500:
             st.write("### 🔄 Scatter Matrix (Pairplot)")
             fig = px.scatter_matrix(df_cleaned[numeric_cols].dropna())
-            st.plotly_chart(fig, use_container_width=True, key=str(hash("pairplot")))
+            st.plotly_chart(fig, use_container_width=True)
             save_fig(fig, "Scatter Matrix")
 
         if datetime_cols:
@@ -99,7 +98,7 @@ def generate_visual_report(df_cleaned):
                 for num_col in numeric_cols:
                     st.write(f"### ⏳ Time Series: {num_col} over {col}")
                     fig = px.line(df_cleaned.sort_values(col), x=col, y=num_col, title=f"{num_col} over {col}")
-                    st.plotly_chart(fig, use_container_width=True, key=str(hash(f"time_{col}_{num_col}")))
+                    st.plotly_chart(fig, use_container_width=True)
                     save_fig(fig, f"Time Series: {num_col} over {col}")
 
         st.write("### ❓ Missing Data Heatmap")
@@ -108,14 +107,14 @@ def generate_visual_report(df_cleaned):
                                         y=df_cleaned.columns,
                                         colorscale='Viridis'))
         fig.update_layout(title="Missing Data Heatmap", xaxis_title="Index", yaxis_title="Columns")
-        st.plotly_chart(fig, use_container_width=True, key=str(hash("missing_heatmap")))
+        st.plotly_chart(fig, use_container_width=True)
         save_fig(fig, "Missing Data Heatmap")
 
         if 'target' in df_cleaned.columns:
             st.write("### 🎯 Correlation with Target")
             target_corr = df_cleaned.corr()['target'].drop('target').sort_values()
             fig = px.bar(target_corr, orientation='h', title="Correlation with Target")
-            st.plotly_chart(fig, use_container_width=True, key=str(hash("target_corr")))
+            st.plotly_chart(fig, use_container_width=True)
             save_fig(fig, "Correlation with Target")
 
     if st.button("📥 Export Visual Report to PDF"):
@@ -130,8 +129,8 @@ def generate_visual_report(df_cleaned):
             pdf.cell(0, 10, title, ln=True)
             try:
                 pdf.image(img_path, w=180)
-            except Exception as e:
-                st.warning(f"⚠️ Could not add {title} to PDF: {e}")
+            except Exception:
+                pass
             pdf.ln(5)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -146,6 +145,7 @@ def generate_visual_report(df_cleaned):
                 )
             os.unlink(tmp.name)
 
+        # cleanup temp PNGs
         for _, path in image_paths:
             try:
                 os.remove(path)
