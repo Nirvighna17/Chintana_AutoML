@@ -11,6 +11,12 @@ from src.model_selector import suggest_models
 from src.data_splitter import auto_split, manual_split, generate_kfold_splits, display_split_summary, display_kfold_info
 from src.train_model import train_model, evaluate_model, get_model_parameters_ui, save_model
 import streamlit.components.v1 as components
+import os
+import shutil
+
+if not shutil.which("google-chrome") and not shutil.which("chromium"):
+    os.system("apt-get update && apt-get install -y chromium-browser")
+    os.environ["PATH"] += os.pathsep + "/usr/bin"
 
 components.html("""
     <script>
