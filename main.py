@@ -148,6 +148,6 @@ st.markdown("""
 
     <div style='text-align: center; color: #cccccc; font-size: 0.9rem; padding-top: 1rem;'>
         © 2025 <b>Chintana</b> · All rights reserved.<br>
-        Made by Nirvighna Shendurnikar ·<a href='mailto:contact@nirvighnalnct@gmail.com' style='color:#00e676;'>Contact</a>
+        Made by Nirvighna Shendurnikar 
     </div>
 """, unsafe_allow_html=True)
