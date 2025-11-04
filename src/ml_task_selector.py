@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 
 def detect_target_column(df):
     """
@@ -21,7 +22,7 @@ def detect_target_column(df):
     numeric_cols = df.select_dtypes(include=['number']).columns
     if len(numeric_cols) > 1:
         corr_matrix = df[numeric_cols].corr().abs()
-        upper = corr_matrix.where(~(pd.np.tril(pd.np.ones(corr_matrix.shape)).astype(bool)))
+        upper = corr_matrix.where(~(np.tril(np.ones(corr_matrix.shape)).astype(bool)))
         strongest_target = upper.sum().sort_values(ascending=False).index[0]
         return strongest_target
 
@@ -31,12 +32,33 @@ def detect_target_column(df):
 
     return None
 
+
+def detect_task_type(df, target_column):
+    if target_column is None:
+        return "Unsupervised"
+
+    unique_vals = df[target_column].nunique()
+    dtype = df[target_column].dtype
+
+    if pd.api.types.is_numeric_dtype(dtype):
+        if unique_vals <= 10:
+            return "Classification"
+        else:
+            return "Regression"
+    else:
+        return "Classification"
+
+
 def get_target_column(df):
     st.subheader("🎯 Target Column Selection")
 
-    user_option = st.radio("Do you want to perform Supervised or Unsupervised Learning?",
-                           ["Supervised Learning", "Unsupervised Learning"], key="task_choice")
+    user_option = st.radio(
+        "Do you want to perform Supervised or Unsupervised Learning?",
+        ["Supervised Learning", "Unsupervised Learning"],
+        key="task_choice"
+    )
 
+    # 🧠 UNSUPERVISED LEARNING BLOCK
     if user_option == "Unsupervised Learning":
         st.info("Since this is unsupervised learning, no target column is required.")
         st.markdown("""
@@ -55,19 +77,24 @@ def get_target_column(df):
         st.success(f"🧪 Selected Unsupervised Task: **{task_type}**")
         return None, task_type
 
-    # Try to suggest likely target columns based on name and uniqueness
+    # 🧩 SUPERVISED LEARNING BLOCK
+    # --- USE SMART TARGET DETECTION ---
+    auto_detected_target = detect_target_column(df)
 
-    likely_targets = [
-        col for col in df.columns
-        if col.lower() in ["target", "label", "y"] or df[col].nunique() < len(df) * 0.5
-    ]
-
-    if likely_targets:
-        default_index = df.columns.get_loc(likely_targets[0])
+    if auto_detected_target:
+        st.success(f"🤖 Automatically detected likely target column: **{auto_detected_target}**")
+        default_index = df.columns.get_loc(auto_detected_target)
     else:
+        st.warning("⚠ No clear target detected automatically. Please select manually.")
         default_index = 0
 
-    target_column = st.selectbox("Select the target column:", df.columns, index=default_index, key="target_select")
+    # User can override auto-detection
+    target_column = st.selectbox(
+        "Select the target column:",
+        df.columns,
+        index=default_index,
+        key="target_select"
+    )
 
     # Validation checks
     if df[target_column].isnull().any():
@@ -76,9 +103,11 @@ def get_target_column(df):
     if df[target_column].nunique() <= 1:
         st.error("❌ The selected target column has only one unique value. Please choose another column.")
 
+    # Detect suggested task type automatically
     suggested_task = detect_task_type(df, target_column)
     st.info(f"🔍 Suggested Task Type: **{suggested_task}**")
 
+    # Allow user to confirm or override
     task_type = st.radio(
         "🧠 Select the type of ML task you want to perform:",
         options=["Classification", "Regression"],
@@ -93,18 +122,3 @@ def get_target_column(df):
 
     return target_column, task_type
 
-
-def detect_task_type(df, target_column):
-    if target_column is None:
-        return "Unsupervised"
-
-    unique_vals = df[target_column].nunique()
-    dtype = df[target_column].dtype
-
-    if pd.api.types.is_numeric_dtype(dtype):
-        if unique_vals <= 10:
-            return "Classification"
-        else:
-            return "Regression"
-    else:
-        return "Classification"
