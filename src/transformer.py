@@ -33,7 +33,7 @@ def full_transformation_pipeline(
     # 3. Encode categorical features
     if smart_encode:
         for col in df.select_dtypes(include='object').columns:
-            if df[col].nunique() < 10:
+            if df[col].nunique() < 20:
                 df = pd.get_dummies(df, columns=[col], drop_first=True)
             else:
                 df.drop(columns=col, inplace=True)
