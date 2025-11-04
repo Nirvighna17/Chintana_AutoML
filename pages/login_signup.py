@@ -309,7 +309,7 @@ with tab3:
     fp_email = st.text_input("Enter your registered email")
 
     if st.button("📤 Send OTP"):
-        otp = send_verification_email(fp_email)
+        otp = send_reset_otp(fp_email)
         if otp:
             st.session_state["fp_otp_sent"] = True
             st.session_state["fp_otp_code"] = otp
